@@ -16,6 +16,12 @@ add_executable(executable_payload ${EXECUTABLE_PAYLOAD})
 	file(GLOB_RECURSE CLASSIC_DLL_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/classic_dll_injection.cpp)
 	add_executable(classic_dll_injection ${CLASSIC_DLL_INJECTION})
 
+	file(GLOB_RECURSE SETWINDOWHOOK_INJECTION LIST_DIRECTORIES true pe_injection/setwindowshook_injection.cpp)
+	add_executable(setwindowhook_dll_injection ${SETWINDOWHOOK_INJECTION})
+
+	file(GLOB_RECURSE PE_INJECTION LIST_DIRECTORIES true pe_injection/pe_inject.cpp)
+	add_executable(pe_injection ${PE_INJECTION})
+
 
 # Shellcode Injection
 file(GLOB_RECURSE CLASSIC_SHELLCODE_INJECTION LIST_DIRECTORIES true shellcode_injection/shellcode.hpp shellcode_injection/classic_shellcode_injection.cpp)
@@ -26,3 +32,6 @@ add_executable(entrypoint_injection ${ENTRYPOINT_INJECTION})
 
 file(GLOB_RECURSE QUEUEAPC_INJECTION LIST_DIRECTORIES true shellcode_injection/queueapc_injection.cpp)
 add_executable(queueapc_injection ${QUEUEAPC_INJECTION})
+
+file(GLOB_RECURSE THREADCONTEXT_INJECTION LIST_DIRECTORIES true shellcode_injection/threadcontext_injection.cpp)
+add_executable(threadcontext_injection ${THREADCONTEXT_INJECTION})
