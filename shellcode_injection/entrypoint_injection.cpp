@@ -9,7 +9,7 @@
 
 /**
 * Creates a suspended process of the supplied binary path and replaces its entry point with shellcode before resuming its execution.
-* 
+* Supports 32- and 64 Bit applications.
 */
 int main(int argc, char* argv[])
 {
