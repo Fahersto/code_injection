@@ -1,5 +1,10 @@
 #include <Windows.h>
 
+extern "C" __declspec(dllexport) int SetWindowsHookCallback(int code, WPARAM wParam, LPARAM lParam)
+{
+	Beep(300, 200);
+	return(CallNextHookEx(NULL, code, wParam, lParam));
+}
 
 /**
 * Spawns a MessageBox and then unloads itself from the process it has been loaded into. 
