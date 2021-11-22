@@ -1,3 +1,9 @@
+/**
+* Injects shellcode into every thread of a process using QueueAPC.
+* [Warning] - The current implementation causes the process crash after executing the shellcode since the shellcode does not comply the PAPCFUNC prototype expected by QueueUserApc.
+* [Warning] - Works best in x64 with explorer.exe.. currently no good target for steam.exe it seems?
+*/
+
 #include <Windows.h>
 #include <cstdio>
 #include <tlhelp32.h>
@@ -5,12 +11,6 @@
 
 #include "../payload/shellcode.hpp"
 
-
-/**
-* Injects shellcode into every thread of a process using QueueAPC.
-* [Warning] - The current implementation causes the process crash after executing the shellcode since the shellcode does not comply the PAPCFUNC prototype expected by QueueUserApc.
-* [Warning] - Works best in x64 with explorer.exe.. currently no good target for steam.exe it seems?
-*/
 int main(int argc, char* argv[])
 {
 	const char* processName;

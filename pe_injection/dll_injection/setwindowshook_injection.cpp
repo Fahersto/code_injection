@@ -1,11 +1,13 @@
+/**
+* DLL injection using SetWindowsHookEx. Triggering the injection requires key presses.
+* Ensure that you trigger injection on a program with the correct architecture (x86, x64)
+* Supports 32- and 64 Bit applications.
+*/
+
 #include <Windows.h>
 #include <cstdio>
 
-/**
-* DLL injection using SetWindowsHookEx. Triggering the injection requires key presses.
-* Ensure that you trigger injection on a program with the correct architecture (x86, x64) 
-* Supports 32- and 64 Bit applications.
-*/
+
 int main(int argc, char* argv[])
 {
 	char* dllPath;

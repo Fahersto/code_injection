@@ -1,4 +1,10 @@
+/**
+* Spawns a MessageBox and then unloads itself from the process it has been loaded into.
+*
+*/
+
 #include <Windows.h>
+
 
 extern "C" __declspec(dllexport) int SetWindowsHookCallback(int code, WPARAM wParam, LPARAM lParam)
 {
@@ -6,10 +12,6 @@ extern "C" __declspec(dllexport) int SetWindowsHookCallback(int code, WPARAM wPa
 	return(CallNextHookEx(NULL, code, wParam, lParam));
 }
 
-/**
-* Spawns a MessageBox and then unloads itself from the process it has been loaded into. 
-*
-*/
 DWORD __stdcall Run(LPVOID hModule)
 {
 	MessageBoxA(NULL, "Message from payload", "Injected payload", MB_OK);

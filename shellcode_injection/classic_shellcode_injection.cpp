@@ -1,3 +1,9 @@
+/**
+* Injects shellcode into a process
+* Supports 32- and 64 Bit applications.
+* [Warning] - The current implementation crashes the target process after executing the shellcode
+*/
+
 #include <Windows.h>
 #include <string>
 #include <cstdio>
@@ -5,11 +11,7 @@
 
 #include "../payload/shellcode.hpp"
 
-/**
-* Injects shellcode into a process
-* Supports 32- and 64 Bit applications.
-* [Warning] - The current implementation crashes the target process after executing the shellcode
-*/
+
 int main(int argc, char* argv[])
 {
 	const char* processName;

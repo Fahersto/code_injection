@@ -1,12 +1,14 @@
+/**
+* Injects a .dll file into a running process
+* Supports 32- and 64 Bit applications.
+*/
+
 #include <Windows.h>
 #include <string>
 #include <cstdio>
 #include <tlhelp32.h>
 
-/**
-* Injects a .dll file into a running process
-* Supports 32- and 64 Bit applications.
-*/
+
 int main(int argc, char* argv[])
 {
 	char* processName;

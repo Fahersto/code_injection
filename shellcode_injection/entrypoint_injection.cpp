@@ -1,3 +1,8 @@
+/**
+* Creates a suspended process of the supplied binary path and replaces its entry point with shellcode before resuming its execution.
+* Supports 32- and 64 Bit applications.
+*/
+
 #include <Windows.h>
 #include <winternl.h>
 #include <cstdint>
@@ -7,10 +12,7 @@
 
 #include "../payload/shellcode.hpp"
 
-/**
-* Creates a suspended process of the supplied binary path and replaces its entry point with shellcode before resuming its execution.
-* Supports 32- and 64 Bit applications.
-*/
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)

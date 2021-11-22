@@ -1,3 +1,9 @@
+/**
+* Demonstrates PE injection by injecting itself into another process.
+* Supports 32- and 64 Bit applications.
+*
+*/
+
 #include <stdio.h>
 #include <Windows.h>
 #include <cstdint>
@@ -14,11 +20,6 @@ void InjectedFunction()
 	MessageBoxA(NULL, "Message from payload", "Injected payload", MB_OK);
 }
 
-/**
-* Demonstrates PE injection by injecting itself into another process.
-* Supports 32- and 64 Bit applications.
-*
-*/
 int main(int argc, char* argv[])
 {
 	const char* processName;
@@ -28,6 +29,8 @@ int main(int argc, char* argv[])
 		printf("Usage: *.exe processName\n");
 		return 1;
 	}
+
+	printf("[Info] - My ProcessId %d\n", GetCurrentProcessId());
 
 	processName = argv[1];
 
@@ -141,6 +144,9 @@ int main(int argc, char* argv[])
 	int8_t* injectedFunctionRemoteAddress = (int8_t*)InjectedFunction + baseAddressDelta;
 
 	printf("[Info] - Going to execute: %p\n", injectedFunctionRemoteAddress);
+
+	//printf("Press a key to create the remote thread!\n");
+	//getchar();
 
 	HANDLE remoteThreadHandle = CreateRemoteThread(targetProcessHandle, NULL, 0, (LPTHREAD_START_ROUTINE)injectedFunctionRemoteAddress, NULL, 0, NULL);
 	if (!remoteThreadHandle)
