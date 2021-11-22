@@ -11,6 +11,11 @@ file(GLOB_RECURSE EXECUTABLE_PAYLOAD LIST_DIRECTORIES true payload/executable_pa
 add_executable(executable_payload ${EXECUTABLE_PAYLOAD})
 
 # PE Injection
+file(GLOB_RECURSE PE_INJECTION LIST_DIRECTORIES true pe_injection/pe_inject.cpp)
+add_executable(pe_injection ${PE_INJECTION})
+
+file(GLOB_RECURSE PROCESS_HOLLOWING LIST_DIRECTORIES true pe_injection/process_hollowing.cpp)
+add_executable(process_hollowing ${PROCESS_HOLLOWING})
 
 	#DLL Injection
 	file(GLOB_RECURSE CLASSIC_DLL_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/classic_dll_injection.cpp)
@@ -18,9 +23,6 @@ add_executable(executable_payload ${EXECUTABLE_PAYLOAD})
 
 	file(GLOB_RECURSE SETWINDOWHOOK_INJECTION LIST_DIRECTORIES true pe_injection/setwindowshook_injection.cpp)
 	add_executable(setwindowhook_dll_injection ${SETWINDOWHOOK_INJECTION})
-
-	file(GLOB_RECURSE PE_INJECTION LIST_DIRECTORIES true pe_injection/pe_inject.cpp)
-	add_executable(pe_injection ${PE_INJECTION})
 
 
 # Shellcode Injection
