@@ -1,7 +1,7 @@
 /**
-* Injects shellcode into every thread of a process using Get/SetThreadContext.
+* Process Doppelganging - Inject code into a process by creating a malicious section that is backed by a legit file by abusing NTFS transactions.
 * Supports 32- and 64 Bit applications. The 64 bit implementation currently does not support copying the environment in the remote process.
-* No support for WoW64
+* No support for Windows 7 or WoW64
 * Based on: https://www.blackhat.com/docs/eu-17/materials/eu-17-Liberman-Lost-In-Transaction-Process-Doppelganging.pdf
 */
 
