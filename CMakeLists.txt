@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.4)
 project (code_injection)
 
+include_directories(common)
+
 # Mitigation
 file(GLOB_RECURSE COPYSYSCALLSTUB_MITIGATION LIST_DIRECTORIES true mitigation/evasion/copysyscallstub.cpp)
 add_executable(copysyscallstub_mitigation ${COPYSYSCALLSTUB_MITIGATION})
@@ -21,8 +23,14 @@ file(GLOB_RECURSE PROCESS_HOLLOWING LIST_DIRECTORIES true pe_injection/process_h
 add_executable(process_hollowing ${PROCESS_HOLLOWING})
 
 file(GLOB_RECURSE PROCESS_DOPPELGANGING LIST_DIRECTORIES true pe_injection/process_doppelganging/*)
-add_executable(process_doppelganging ${PROCESS_DOPPELGANGING})
+add_executable(process_doppelganging ${PROCESS_DOPPELGANGING} common/ntddk.h)
 target_link_libraries(process_doppelganging ntdll Userenv KtmW32)
+
+file(GLOB_RECURSE TRANSACTED_HOLLOWING LIST_DIRECTORIES true pe_injection/transacted_hollowing.cpp)
+add_executable(transacted_hollowing ${TRANSACTED_HOLLOWING} common/ntddk.h)
+target_link_libraries(transacted_hollowing ntdll KtmW32)
+
+#target_link_libraries(process_doppelganging ntdll Userenv KtmW32)
 
 	#DLL Injection
 	file(GLOB_RECURSE CLASSIC_DLL_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/classic_dll_injection.cpp)
