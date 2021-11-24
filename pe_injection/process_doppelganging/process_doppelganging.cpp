@@ -1,6 +1,7 @@
 /**
 * Injects shellcode into every thread of a process using Get/SetThreadContext.
-* Supports 32- and 64 Bit applications. The 64 bit implementation currently does not support copying the environment in the remote process
+* Supports 32- and 64 Bit applications. The 64 bit implementation currently does not support copying the environment in the remote process.
+* No support for WoW64
 * Based on: https://www.blackhat.com/docs/eu-17/materials/eu-17-Liberman-Lost-In-Transaction-Process-Doppelganging.pdf
 */
 
