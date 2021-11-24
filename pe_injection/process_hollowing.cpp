@@ -8,13 +8,6 @@
 #include <cstdio>
 #include <cstdint>
 
-#ifdef _WIN64
-#define PIMAGE_NT_HEADERS PIMAGE_NT_HEADERS64
-#define Xax Rax
-#else
-#define PIMAGE_NT_HEADERS PIMAGE_NT_HEADERS32
-#define Xax Eax
-#endif
 
 typedef struct BASE_RELOCATION_BLOCK {
 	DWORD PageAddress;
@@ -158,7 +151,9 @@ int main(int argc, char* argv[])
 	}
 
 #ifdef _WIN64
-	context.Rip = (DWORD_PTR)injectedFunctionRemoteAddress;
+	// for 32bit the address to be executed is in RCX when creating a suspended process
+	// RIP did also work
+	context.Rcx = (DWORD_PTR)injectedFunctionRemoteAddress;
 #else
 	// for 32bit the address to be executed is in EAX when creating a suspended process
 	context.Eax = (DWORD_PTR)injectedFunctionRemoteAddress;
