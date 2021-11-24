@@ -22,15 +22,17 @@ add_executable(pe_injection ${PE_INJECTION})
 file(GLOB_RECURSE PROCESS_HOLLOWING LIST_DIRECTORIES true pe_injection/process_hollowing.cpp)
 add_executable(process_hollowing ${PROCESS_HOLLOWING})
 
-file(GLOB_RECURSE PROCESS_DOPPELGANGING LIST_DIRECTORIES true pe_injection/process_doppelganging/*)
+file(GLOB_RECURSE PROCESS_DOPPELGANGING LIST_DIRECTORIES true pe_injection/process_doppelganging.cpp)
 add_executable(process_doppelganging ${PROCESS_DOPPELGANGING} common/ntddk.h)
 target_link_libraries(process_doppelganging ntdll Userenv KtmW32)
+
+file(GLOB_RECURSE PROCESS_GHOSTING LIST_DIRECTORIES true pe_injection/process_ghosting.cpp)
+add_executable(process_ghosting ${PROCESS_GHOSTING} common/ntddk.h)
+target_link_libraries(process_ghosting ntdll Userenv KtmW32)
 
 file(GLOB_RECURSE TRANSACTED_HOLLOWING LIST_DIRECTORIES true pe_injection/transacted_hollowing.cpp)
 add_executable(transacted_hollowing ${TRANSACTED_HOLLOWING} common/ntddk.h)
 target_link_libraries(transacted_hollowing ntdll KtmW32)
-
-#target_link_libraries(process_doppelganging ntdll Userenv KtmW32)
 
 	#DLL Injection
 	file(GLOB_RECURSE CLASSIC_DLL_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/classic_dll_injection.cpp)
