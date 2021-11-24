@@ -118,11 +118,11 @@ HANDLE CreateDirtySectionOfCleanFile(int8_t* payloadBuffer, DWORD payloadSize)
 int main(int argc, char* argv[])
 {
 	char* applicationPath = "C:\\Windows\\System32\\notepad.exe";
-	char* payloadPath = "E:\\repos\\code_injection\\out\\build\\x64-Debug\\executable_payload.exe";
+	char* payloadPath = "";
 
 	if (argc == 2)
 	{
-		printf("[Info] - Using default target: C:\\Windows\\System32\\notepad.exe\n");
+		printf("[Info] - Using default target: %s\n", applicationPath);
 		payloadPath = argv[1];
 	}
 	if (argc == 3)
