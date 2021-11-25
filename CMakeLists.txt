@@ -38,9 +38,11 @@ target_link_libraries(transacted_hollowing ntdll KtmW32)
 	file(GLOB_RECURSE CLASSIC_DLL_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/classic_dll_injection.cpp)
 	add_executable(classic_dll_injection ${CLASSIC_DLL_INJECTION})
 
-	file(GLOB_RECURSE SETWINDOWHOOK_INJECTION LIST_DIRECTORIES true pe_injection/setwindowshook_injection.cpp)
+	file(GLOB_RECURSE SETWINDOWHOOK_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/setwindowshook_injection.cpp)
 	add_executable(setwindowhook_dll_injection ${SETWINDOWHOOK_INJECTION})
 
+	file(GLOB_RECURSE APPINITDLLS_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/appinitdlls_injection.cpp)
+	add_executable(appinitdlls_dll_injection ${APPINITDLLS_INJECTION})
 
 # Shellcode Injection
 file(GLOB_RECURSE CLASSIC_SHELLCODE_INJECTION LIST_DIRECTORIES true shellcode_injection/shellcode.hpp shellcode_injection/classic_shellcode_injection.cpp)
