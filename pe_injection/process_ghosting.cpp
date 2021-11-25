@@ -1,7 +1,7 @@
 /**
 * Process Ghosting - Inject code into a process by creating a malicious section using a delete pending file.
 * Supports 32- and 64 Bit applications. The 64 bit implementation currently does not support copying the environment in the remote process.
-* No support for WoW64
+* No support for WoW64. Technically possible but using low level API with WoW64 is complicated. One has for example to deal with 2 PEBs.
 * Based on: https://www.blackhat.com/docs/eu-17/materials/eu-17-Liberman-Lost-In-Transaction-Process-Doppelganging.pdf
 */
 
@@ -301,7 +301,7 @@ bool Ghost(char* targetPath, int8_t* payloadBuffer, DWORD payloadSize)
 
 	DWORD_PTR payloadEntryPoint = imageBase + entryPoint;
 
-	printf("[Info] - Payload entry point %p\n", payloadEntryPoint);
+	printf("[Info] - Payload entry point %llx\n", payloadEntryPoint);
 
 	if (!SetupProcessParameters(processHandle, processBasicInformation, targetPath))
 	{
@@ -316,7 +316,7 @@ bool Ghost(char* targetPath, int8_t* payloadBuffer, DWORD payloadSize)
 		return false;
 	}
 
-	printf("[Info] - Created thread executing %p\n", payloadEntryPoint);
+	printf("[Info] - Created thread executing %llx\n", payloadEntryPoint);
 
 	return true;
 }
