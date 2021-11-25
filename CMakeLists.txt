@@ -54,3 +54,6 @@ add_executable(queueapc_injection ${QUEUEAPC_INJECTION})
 
 file(GLOB_RECURSE THREADCONTEXT_INJECTION LIST_DIRECTORIES true shellcode_injection/threadcontext_injection.cpp)
 add_executable(threadcontext_injection ${THREADCONTEXT_INJECTION})
+
+file(GLOB_RECURSE PROPAGATE_INJECTION LIST_DIRECTORIES true shellcode_injection/propagate_injection.cpp)
+add_executable(propagate_injection ${PROPAGATE_INJECTION})
