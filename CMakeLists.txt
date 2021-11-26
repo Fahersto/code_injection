@@ -44,6 +44,9 @@ target_link_libraries(transacted_hollowing ntdll KtmW32)
 	file(GLOB_RECURSE APPINITDLLS_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/appinitdlls_injection.cpp)
 	add_executable(appinitdlls_dll_injection ${APPINITDLLS_INJECTION})
 
+	file(GLOB_RECURSE APPCERTDLLS_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/appcertdlls_injection.cpp)
+	add_executable(appcertdlls_dll_injection ${APPCERTDLLS_INJECTION})
+
 # Shellcode Injection
 file(GLOB_RECURSE CLASSIC_SHELLCODE_INJECTION LIST_DIRECTORIES true shellcode_injection/shellcode.hpp shellcode_injection/classic_shellcode_injection.cpp)
 add_executable(classic_shellcode_injection ${CLASSIC_SHELLCODE_INJECTION})
@@ -59,3 +62,6 @@ add_executable(threadcontext_injection ${THREADCONTEXT_INJECTION})
 
 file(GLOB_RECURSE PROPAGATE_INJECTION LIST_DIRECTORIES true shellcode_injection/propagate_injection.cpp)
 add_executable(propagate_injection ${PROPAGATE_INJECTION})
+
+file(GLOB_RECURSE EWMI_INJECTION LIST_DIRECTORIES true shellcode_injection/ewmi_injection.cpp)
+add_executable(ewmi_injection ${EWMI_INJECTION})
