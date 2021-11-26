@@ -99,7 +99,7 @@ bool Propagate(LPVOID payload, DWORD payloadSize)
 		return false;
 	}
 
-	printf("[Info] - Aquired handle to explorer.exe\n");
+	printf("[Info] - Acquired handle to explorer.exe\n");
 
 	SUBCLASS_HEADER subclassHeader;
 	SIZE_T numberOfBytesRead;
@@ -154,6 +154,9 @@ bool Propagate(LPVOID payload, DWORD payloadSize)
 		printf("[Error] %d - Failed to execute payload using PostMessage\n", GetLastError());
 		return false;
 	}
+
+	// there is no easy way to wait for PostMessage to be processed so we just wait 1 second
+	Sleep(1000);
 
 	printf("[Info] - Executed payload by posting a WM_CLOSE message to the window\n");
 

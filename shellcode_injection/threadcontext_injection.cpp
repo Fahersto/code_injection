@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
 	HANDLE targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, processEntry.th32ProcessID);
 	if (!targetProcessHandle)
 	{
-		printf("Error %d - Failed to aquire process handle\n", GetLastError());
+		printf("Error %d - Failed to acquire process handle\n", GetLastError());
 		return 1;
 	}
 
