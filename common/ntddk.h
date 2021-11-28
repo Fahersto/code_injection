@@ -3597,6 +3597,10 @@ extern "C" {
 
     --*/
 
+    NTSYSAPI NTSTATUS NTAPI NtCreateDirectoryObject(
+        PHANDLE            DirectoryHandle,
+        ACCESS_MASK        DesiredAccess,
+        POBJECT_ATTRIBUTES ObjectAttributes);
 
     NTSYSAPI
         NTSTATUS
