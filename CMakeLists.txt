@@ -47,6 +47,9 @@ target_link_libraries(transacted_hollowing ntdll KtmW32)
 	file(GLOB_RECURSE APPCERTDLLS_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/appcertdlls_injection.cpp)
 	add_executable(appcertdlls_dll_injection ${APPCERTDLLS_INJECTION})
 
+	file(GLOB_RECURSE SHIM_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/shim_injection.cpp)
+	add_executable(shim_dll_injection ${SHIM_INJECTION})
+
 	file(GLOB_RECURSE KNOWNDLLSCACHE_INJECTION LIST_DIRECTORIES true pe_injection/dll_injection/knowndllscache_injection.cpp)
 	add_executable(knowndllscache_dll_injection ${KNOWNDLLSCACHE_INJECTION})
 	target_link_libraries(knowndllscache_dll_injection ntdll)
