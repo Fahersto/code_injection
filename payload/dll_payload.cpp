@@ -5,11 +5,22 @@
 
 #include <Windows.h>
 
-
+// export for SetWindowsHook injection
 extern "C" __declspec(dllexport) int SetWindowsHookCallback(int code, WPARAM wParam, LPARAM lParam)
 {
 	Beep(300, 200);
 	return(CallNextHookEx(NULL, code, wParam, lParam));
+}
+
+// exports for shim injection
+extern "C" __declspec(dllexport) int GetHookAPIs(PVOID a, PVOID b, PVOID c)
+{
+	return 0x01;
+}
+
+extern "C" __declspec(dllexport) int NotifyShims(PVOID a, PVOID b)
+{
+	return 0x01;
 }
 
 DWORD __stdcall Run(LPVOID hModule)
