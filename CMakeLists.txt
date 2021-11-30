@@ -64,6 +64,9 @@ add_executable(entrypoint_injection ${ENTRYPOINT_INJECTION})
 file(GLOB_RECURSE QUEUEAPC_INJECTION LIST_DIRECTORIES true shellcode_injection/queueapc_injection.cpp)
 add_executable(queueapc_injection ${QUEUEAPC_INJECTION})
 
+file(GLOB_RECURSE ATOMBOMBING_INJECTION LIST_DIRECTORIES true shellcode_injection/atombombing_injection.cpp)
+add_executable(atombombing_injection ${ATOMBOMBING_INJECTION})
+
 file(GLOB_RECURSE THREADCONTEXT_INJECTION LIST_DIRECTORIES true shellcode_injection/threadcontext_injection.cpp)
 add_executable(threadcontext_injection ${THREADCONTEXT_INJECTION})
 
