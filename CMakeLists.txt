@@ -75,3 +75,6 @@ add_executable(propagate_injection ${PROPAGATE_INJECTION})
 
 file(GLOB_RECURSE EWMI_INJECTION LIST_DIRECTORIES true shellcode_injection/ewmi_injection.cpp)
 add_executable(ewmi_injection ${EWMI_INJECTION})
+
+file(GLOB_RECURSE GHOSTWRITING_INJECTION LIST_DIRECTORIES true shellcode_injection/ghostwriting_injection.cpp)
+add_executable(ghostwriting_injection ${GHOSTWRITING_INJECTION})
