@@ -78,3 +78,7 @@ add_executable(ewmi_injection ${EWMI_INJECTION})
 
 file(GLOB_RECURSE GHOSTWRITING_INJECTION LIST_DIRECTORIES true shellcode_injection/ghostwriting_injection.cpp)
 add_executable(ghostwriting_injection ${GHOSTWRITING_INJECTION})
+
+file(GLOB_RECURSE SECTION_INJECTION LIST_DIRECTORIES true shellcode_injection/section_injection.cpp)
+add_executable(section_injection ${SECTION_INJECTION})
+target_link_libraries(section_injection ntdll)
