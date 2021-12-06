@@ -1,7 +1,6 @@
 /**
 * Demonstrates PE injection by injecting itself into another process.
 * Supports 32- and 64 Bit applications.
-*
 */
 
 #include <stdio.h>

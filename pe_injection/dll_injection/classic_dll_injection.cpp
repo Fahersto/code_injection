@@ -1,6 +1,8 @@
 /**
 * Injects a .dll file into a running process
 * Supports 32- and 64 Bit applications.
+* [Requirements]
+*	- DLL file on disk
 */
 
 #include <Windows.h>
@@ -12,21 +14,19 @@
 int main(int argc, char* argv[])
 {
 	char* processName;
-	char* dllPath;
 
 	if (argc != 3)
 	{
-		printf("Usage: *.exe processName absolutePath\n");
+		printf("Usage: *.exe processName dllPath\n");
 		return 1;
 	}
 
 	processName = argv[1];
-	dllPath = argv[2];
 	
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
 	{
-		printf("Error %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
+		printf("[Error] %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
 		return 1;
 	}
 
@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	PROCESSENTRY32 processEntry = { sizeof(PROCESSENTRY32) };
 	if (!Process32First(processesSnapshot, &processEntry))
 	{
-		printf("Error %d - Failed to Process32First\n", GetLastError());
+		printf("[Error] %d - Failed to Process32First\n", GetLastError());
 		return 1;
 	}
 
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
 	if (!foundTargetProcess)
 	{
-		printf("Error - Failed to find process: %s\n", processName);
+		printf("[Error] - Failed to find process: %s\n", processName);
 		return 1;
 	}
 
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	HANDLE targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, processEntry.th32ProcessID);
 	if (!targetProcessHandle)
 	{
-		printf("Error %d - Failed to acquire process handle\n", GetLastError());
+		printf("[Error] %d - Failed to acquire process handle\n", GetLastError());
 		return 1;
 	}
 
@@ -70,26 +70,29 @@ int main(int argc, char* argv[])
 	LPVOID remoteMemory = VirtualAllocEx(targetProcessHandle, nullptr, MAX_PATH, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	if (!remoteMemory)
 	{
-		printf("Error %d - Failed to allocate memory in target process\n", GetLastError());
+		printf("[Error] %d - Failed to allocate memory in target process\n", GetLastError());
 		return 1;
 	}
 
 	printf("[Info] - Allocated remote memory at %p\n", remoteMemory);
 
+	DWORD loadDlls = 1;
+	char absoluteDllPath[MAX_PATH + 1];
+	GetFullPathNameA(argv[2], MAX_PATH + 1, absoluteDllPath, NULL);
 	// write path of .dll to target process
-	if (!WriteProcessMemory(targetProcessHandle, remoteMemory, dllPath, strlen(dllPath), nullptr))
+	if (!WriteProcessMemory(targetProcessHandle, remoteMemory, absoluteDllPath, strlen(absoluteDllPath), nullptr))
 	{
-		printf("Error %d - Failed to write .dll path to target process\n", GetLastError());
+		printf("[Error] %d - Failed to write .dll path to target process\n", GetLastError());
 		return 1;
 	}
 
-	printf("[Info] - Wrote dll path %s to target process %s \n", dllPath, processName);
+	printf("[Info] - Wrote dll path %s to target process %s \n", absoluteDllPath, processName);
 
 	// get handle to kernel32.dll (which is loaded by default)
 	HMODULE kernel32ModuleHandle = GetModuleHandle("kernel32.dll");
 	if (!kernel32ModuleHandle)
 	{
-		printf("Error %d - Failed to get kernel32 module handle\n", GetLastError());
+		printf("[Error] %d - Failed to get kernel32 module handle\n", GetLastError());
 		return 1;
 	}
 
@@ -97,7 +100,7 @@ int main(int argc, char* argv[])
 	FARPROC kernel32LoadLibrary = GetProcAddress(kernel32ModuleHandle, "LoadLibraryA");
 	if (!kernel32LoadLibrary)
 	{
-		printf("Error %d - Failed to resolve LoadLibraryA\n", GetLastError());
+		printf("[Error] %d - Failed to resolve LoadLibraryA\n", GetLastError());
 		return 1;
 	}
 
@@ -116,7 +119,7 @@ int main(int argc, char* argv[])
 
 	if (!remoteThreadHandle)
 	{
-		printf("Error %d - Failed to CreateRemoteThread\n", GetLastError());
+		printf("[Error] %d - Failed to CreateRemoteThread\n", GetLastError());
 		return 1;
 	}
 

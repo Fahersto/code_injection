@@ -1,5 +1,5 @@
 /**
-* Process Doppelganging - Inject code into a process by creating a malicious section that is backed by a legit file by abusing NTFS transactions.
+* Process Doppelgänging - Inject code into a process by creating a malicious section that is backed by a legit file by abusing NTFS transactions.
 * Supports 32- and 64 Bit applications. The 64 bit implementation currently does not support copying the environment in the remote process.
 * No support for Windows 10 since a Windows Defender drivers prevents the thread from executing even with Windows Defender disabled.
 * No support for WoW64. Technically possible but using low level API with WoW64 is complicated. One has for example to deal with 2 PEBs.

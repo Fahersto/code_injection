@@ -1,7 +1,9 @@
 /**
 * DLL injection using SetWindowsHookEx. Triggering the injection requires key presses.
-* Ensure that you trigger injection on a program with the correct architecture (x86, x64)
+* Ensure  you trigger injection on a program with the correct architecture (x86, x64).
 * Supports 32- and 64 Bit applications.
+* [Requirements]
+*	- target process must load user32.dll
 */
 
 #include <Windows.h>
@@ -10,25 +12,24 @@
 
 int main(int argc, char* argv[])
 {
-	char* dllPath;
-
 	if (argc != 2)
 	{
-		printf("Usage: *.exe absoluteDllPath\n");
+		printf("Usage: *.exe dllPath\n");
 		return 1;
 	}
 
-	dllPath = argv[1];
+	char absoluteDllPath[MAX_PATH + 1];
+	GetFullPathNameA(argv[1], MAX_PATH + 1, absoluteDllPath, NULL);
 
 	// load library to be injected
-	HMODULE dllHandle = LoadLibrary(dllPath);
+	HMODULE dllHandle = LoadLibrary(absoluteDllPath);
 	if (!dllHandle) 
 	{
-		printf("[Error] %d - Failed to load dll %s\n", GetLastError(), dllPath);
+		printf("[Error] %d - Failed to load dll %s\n", GetLastError(), absoluteDllPath);
 		return 1;
 	}
 
-	printf("[Info] - Loaded library %s\n", dllPath);
+	printf("[Info] - Loaded library %s\n", absoluteDllPath);
 
 	// resolve SetWindowsHookCallback
 	HOOKPROC windowsHookCallback = (HOOKPROC)GetProcAddress(dllHandle, "SetWindowsHookCallback");
@@ -49,8 +50,9 @@ int main(int argc, char* argv[])
 	}
 
 	printf("[Info] - Installed hook\n");
+	printf("[Info] - Press any key to uhook\n");
 
-	// wait for a chacter press to unhook
+	// wait for a character press to unhook
 	getchar();
 
 	// unhook

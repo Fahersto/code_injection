@@ -1,12 +1,13 @@
 /**
 * Injects shellcode using a ghost-writing (ROP based) technique.
-* The implementaion uses a ROP chain to call VirtualProtect and make the stack executable to execute its payload
+* The implementaion uses a ROP chain to call VirtualProtect and make the stack executable to execute its payload.
 * Note: 
 *	- 32 bit ROP chain uses gadgets in ntdll.dll and kernel32.dll
 	- 64 bit ROP chain uses gadgets in ntdll.dll 
 *	- The ghostwriting uses gadgets from ntdll.dll
-*	- for 64 bit you can set "useRopChain" to false to allocate executable memory using VirtualAllocEx instead of using a ROP chain. This still requires the writegadget and endless loop for ghostwriting to be found
+*	- For 64 bit you can set "useRopChain" to false to allocate executable memory using VirtualAllocEx instead of using a ROP chain. This still requires the writegadget and endless loop for ghostwriting to be found.
 * Supports 32- and 64 Bit applications.
+* The current implementation does not support Windows 7.
 * The hijacked thread may require the target application to be focused or some interaction to execute.
 * Based on: https://i.blackhat.com/USA-19/Thursday/us-19-Kotler-Process-Injection-Techniques-Gotta-Catch-Them-All.pdf, https://www.shogunlab.com/blog/2018/02/11/zdzg-windows-exploit-5.html
 */
@@ -595,7 +596,6 @@ bool WriteShellcode(HANDLE threadHandle, BYTE* remoteMemory, BYTE* writeGadget, 
 int main(int argc, char* argv[])
 {
 	const char* processName = "notepad.exe";
-	/*
 #ifdef _WIN64
 	if (argc != 3)
 	{
@@ -612,7 +612,6 @@ int main(int argc, char* argv[])
 	}
 	processName = argv[1];
 #endif
-*/
 	HANDLE processesSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD, 0);
 	if (processesSnapshot == INVALID_HANDLE_VALUE)
 	{

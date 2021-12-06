@@ -1,7 +1,7 @@
 /**
 * Injects a .dll into notepad.exe by poisoning the KnownDlls cache to load a malicious dll instead of a benign
 * The current implementation does not support 32bit or WoW64
-* We can use any dll that is loaded into the process for the first time when doing a specific action and is a KnownDll
+* We can use any dll that is loaded into the process for the first time when doing a specific action and is a KnownDll.
 *  examples found using x64 dbg log: 
 	ole32.dll		- Loaded when typing into the notepad file
 	comdlg32.dll	- Loaded when saving the document
@@ -12,7 +12,6 @@
 #include <Windows.h>
 #include <iostream>
 #include <vector>
-
 
 #include "../../common/ntddk.h"
 

@@ -1,7 +1,6 @@
 /**
 * Demonstrates process hollowing by injecting itself into a process that is created in a suspended state.
 * Supports 32- and 64 Bit applications.
-*
 */
 
 #include <Windows.h>
@@ -56,7 +55,7 @@ int main(int argc, char* argv[])
 		0,
 		0,
 		0,
-		CREATE_SUSPENDED,
+		CREATE_SUSPENDED | DETACHED_PROCESS | CREATE_NO_WINDOW,
 		0,
 		0,
 		&startupInfo,
@@ -71,7 +70,7 @@ int main(int argc, char* argv[])
 	//NtQueryInformationProcess fnNtQueryInformationProcess = (NtQueryInformationProcess)GetProcAddress(ntdllHandle, "NtQueryInformationProcess");
 
 
-	// unmapping currently makes it unstable and is an optional step in process hollowing anyway
+	// unmapping currently makes it unstable and is an optional step in process hollowing
 	// fnNtUnmapViewOfSection(processHandle, peb.ImageBaseAddress);
 
 	// read PE header of payload (this process injects itself, alternatively an executable file from disc could be read)
