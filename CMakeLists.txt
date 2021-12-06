@@ -60,6 +60,7 @@ add_executable(classic_shellcode_injection ${CLASSIC_SHELLCODE_INJECTION})
 
 file(GLOB_RECURSE ENTRYPOINT_INJECTION LIST_DIRECTORIES true shellcode_injection/shellcode.hpp shellcode_injection/entrypoint_injection.cpp)
 add_executable(entrypoint_injection ${ENTRYPOINT_INJECTION})
+target_link_libraries(entrypoint_injection ntdll)
 
 file(GLOB_RECURSE QUEUEAPC_INJECTION LIST_DIRECTORIES true shellcode_injection/queueapc_injection.cpp)
 add_executable(queueapc_injection ${QUEUEAPC_INJECTION})
@@ -78,6 +79,14 @@ add_executable(ewmi_injection ${EWMI_INJECTION})
 
 file(GLOB_RECURSE GHOSTWRITING_INJECTION LIST_DIRECTORIES true shellcode_injection/ghostwriting_injection.cpp)
 add_executable(ghostwriting_injection ${GHOSTWRITING_INJECTION})
+
+file(GLOB_RECURSE KERNELCALLBACKTABLE_INJECTION LIST_DIRECTORIES true shellcode_injection/kernelcallbacktable_injection.cpp)
+add_executable(kernelcallbacktable_injection ${KERNELCALLBACKTABLE_INJECTION})
+target_link_libraries(kernelcallbacktable_injection ntdll)
+
+file(GLOB_RECURSE TLSCALLBACK_INJECTION LIST_DIRECTORIES true shellcode_injection/tlscallback_injection.cpp)
+add_executable(tlscallback_injection ${TLSCALLBACK_INJECTION})
+target_link_libraries(tlscallback_injection ntdll)
 
 file(GLOB_RECURSE SECTION_INJECTION LIST_DIRECTORIES true shellcode_injection/section_injection.cpp)
 add_executable(section_injection ${SECTION_INJECTION})
