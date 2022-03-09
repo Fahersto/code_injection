@@ -136,7 +136,7 @@ HANDLE CreateDirtySectionOfDeletePendingFile(int8_t* payloadBuffer, DWORD payloa
 		return nullptr;
 	}
 
-	// set delete flag whch will delete the file as soon as its closed
+	// set delete flag which will delete the file as soon as its closed
 	FILE_DISPOSITION_INFORMATION fileDispositionInformation = {};
 	fileDispositionInformation.DeleteFile = true;
 	if (!NT_SUCCESS(NtSetInformationFile(deletePendingFileHandle, &ioStatusBlock, &fileDispositionInformation, sizeof(fileDispositionInformation), FileDispositionInformation)))

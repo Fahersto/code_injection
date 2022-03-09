@@ -1,6 +1,6 @@
 /**
 * DLL injection using SetWindowsHookEx. Triggering the injection requires key presses.
-* Ensure  you trigger injection on a program with the correct architecture (x86, x64).
+* Ensure you trigger injection on a program with the correct architecture (x86, x64).
 * Supports 32- and 64 Bit applications.
 * [Requirements]
 *	- target process must load user32.dll
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	printf("[Info] - Resolved SetWindowsHook callback\n");
 
 	// install the hook
-	HHOOK hookHandle = SetWindowsHookEx(WH_KEYBOARD, windowsHookCallback, dllHandle, 0);
+	HHOOK hookHandle = SetWindowsHookExA(WH_KEYBOARD, windowsHookCallback, dllHandle, 0);
 	if (!hookHandle)
 	{
 		printf("[Error] %d - Failed to install hook\n", GetLastError());

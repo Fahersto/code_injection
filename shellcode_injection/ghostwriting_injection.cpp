@@ -599,7 +599,7 @@ int main(int argc, char* argv[])
 #ifdef _WIN64
 	if (argc != 3)
 	{
-		printf("Usage: *.exe bUseRopChain [processName]\n");
+		printf("Usage: *.exe bUseRopChain processName\n");
 		return 1;
 	}
 	useRopChain = atoi(argv[1]);

@@ -1,7 +1,7 @@
 /**
 * Injects shellcode into explorer.exe abusing a subclassed window.
 * Supports 32- and 64 Bit applications.
-* [Warning] - The current implementation causes the process crash after executing the shellcode.
+* [Warning] - The current implementation causes the process crash after executing the shellcode because it does not match the SUBCLASSPROC signature
 * [Requirements]
 *	- target process must have a subclassed window
 * Based on: https://modexp.wordpress.com/2018/08/23/process-injection-propagate/
